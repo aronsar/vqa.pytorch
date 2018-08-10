@@ -214,7 +214,7 @@ def main():
         # train for one epoch
         engine.train(train_loader, model, criterion, optimizer, 
                      exp_logger, epoch, args.print_freq)
-        
+        # FIXME: call extract.py here with both coco and vgenome, but maybe you can call it at the end of this for loop as well
         if options['vqa']['trainsplit'] == 'train':
             # evaluate on validation set
             acc1, val_results = engine.validate(val_loader, model, criterion,

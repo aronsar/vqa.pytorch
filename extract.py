@@ -63,6 +63,7 @@ def main():
                 transforms.ToTensor(),
                 normalize,
             ]))
+            #FIXME: insert hide and seek here
     elif args.dataset == 'vgenome':
         if args.data_split != 'train':
             raise ValueError('train split is required for vgenome')
@@ -75,6 +76,7 @@ def main():
                 transforms.ToTensor(),
                 normalize,
             ]))
+            #FIXME: insert hide and seek here, modifying "dataset"
 
     data_loader = DataLoader(dataset,
         batch_size=args.batch_size, shuffle=False,
@@ -93,8 +95,8 @@ def extract(data_loader, model, path_file, mode):
     hdf5_file = h5py.File(path_hdf5, 'w')
 
     # estimate output shapes
-    output = model(Variable(torch.ones(1, 3, args.size, args.size),
-                            volatile=True))
+    with torch.no_grad():
+        output = model(Variable(torch.ones(1, 3, args.size, args.size)))
 
     nb_images = len(data_loader.dataset)
     if mode == 'both' or mode == 'att':
@@ -117,12 +119,14 @@ def extract(data_loader, model, path_file, mode):
 
     idx = 0
     for i, input in enumerate(data_loader):
-        input_var = Variable(input['visual'], volatile=True)
+        with torch.no_grad():
+            input_var = Variable(input['visual'])
+        #import pdb; pdb.set_trace()
         output_att = model(input_var)
 
         nb_regions = output_att.size(2) * output_att.size(3)
         output_noatt = output_att.sum(3).sum(2).div(nb_regions).view(-1, 2048)
-
+        #import pdb; pdb.set_trace()
         batch_size = output_att.size(0)
         if mode == 'both' or mode == 'att':
             hdf5_att[idx:idx+batch_size]   = output_att.data.cpu().numpy()

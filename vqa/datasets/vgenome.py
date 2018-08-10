@@ -12,10 +12,10 @@ from .utils import AbstractVQADataset
 
 def raw(dir_raw):
     dir_img = os.path.join(dir_raw, 'images')
-    os.system('wget http://visualgenome.org/static/data/dataset/image_data.json.zip -P '+dir_raw)
-    os.system('wget http://visualgenome.org/static/data/dataset/question_answers.json.zip -P '+dir_raw)
-    os.system('wget https://cs.stanford.edu/people/rak248/VG_100K_2/images.zip -P '+dir_raw)
-    os.system('wget https://cs.stanford.edu/people/rak248/VG_100K_2/images2.zip -P '+dir_raw)
+    os.system('wget --no-check-certificate http://visualgenome.org/static/data/dataset/image_data.json.zip -P '+dir_raw)
+    os.system('wget --no-check-certificate http://visualgenome.org/static/data/dataset/question_answers.json.zip -P '+dir_raw)
+    os.system('wget --no-check-certificate https://cs.stanford.edu/people/rak248/VG_100K_2/images.zip -P '+dir_raw)
+    os.system('wget --no-check-certificate https://cs.stanford.edu/people/rak248/VG_100K_2/images2.zip -P '+dir_raw)
 
     os.system('unzip '+os.path.join(dir_raw, 'image_data.json.zip')+' -d '+dir_raw)
     os.system('unzip '+os.path.join(dir_raw, 'question_answers.json.zip')+' -d '+dir_raw)
