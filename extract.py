@@ -3,6 +3,7 @@ import os
 import time
 import h5py
 import numpy
+import random # for hide and seek
 
 import torch
 import torch.nn as nn
@@ -63,7 +64,6 @@ def main():
                 transforms.ToTensor(),
                 normalize,
             ]))
-            #FIXME: insert hide and seek here
     elif args.dataset == 'vgenome':
         if args.data_split != 'train':
             raise ValueError('train split is required for vgenome')
@@ -76,7 +76,6 @@ def main():
                 transforms.ToTensor(),
                 normalize,
             ]))
-            #FIXME: insert hide and seek here, modifying "dataset"
 
     data_loader = DataLoader(dataset,
         batch_size=args.batch_size, shuffle=False,
@@ -88,6 +87,32 @@ def main():
 
     extract(data_loader, model, path_file, args.mode)
 
+def hide_and_seek(input_var):
+    "Performs hide and seek on the input tensor of shape [batch size, channels, width, height]"
+    s = input_var.shape
+    batch_size = s[0]
+    wd = s[2]
+    ht = s[3]
+    
+    for b in range(batch_size):
+        # possible grid size, 0 means no hiding
+        grid_sizes=[0,16,32,44,56]
+
+        # hiding probability
+        hide_prob = 0.25
+
+        # randomly choose one grid size
+        grid_size= grid_sizes[random.randint(0,len(grid_sizes)-1)]
+
+        # hide the patches
+        if(grid_size!=0):
+            for x in range(0,wd,grid_size):
+                for y in range(0,ht,grid_size):
+                    x_end = min(wd, x+grid_size)  
+                    y_end = min(ht, y+grid_size)
+                    if(random.random() <=  hide_prob):
+                        input_var[b, :, x:x_end,y:y_end]=0
+        return input_var
 
 def extract(data_loader, model, path_file, mode):
     path_hdf5 = path_file + '.hdf5'
@@ -95,8 +120,8 @@ def extract(data_loader, model, path_file, mode):
     hdf5_file = h5py.File(path_hdf5, 'w')
 
     # estimate output shapes
-    with torch.no_grad():
-        output = model(Variable(torch.ones(1, 3, args.size, args.size)))
+    output = model(Variable(torch.ones(1, 3, args.size, args.size),
+                            volatile=True))
 
     nb_images = len(data_loader.dataset)
     if mode == 'both' or mode == 'att':
@@ -119,14 +144,12 @@ def extract(data_loader, model, path_file, mode):
 
     idx = 0
     for i, input in enumerate(data_loader):
-        with torch.no_grad():
-            input_var = Variable(input['visual'])
-        #import pdb; pdb.set_trace()
+        input_var = Variable(input['visual'], volatile=True)
+        input_var = hide_and_seek(input_var)
         output_att = model(input_var)
 
         nb_regions = output_att.size(2) * output_att.size(3)
         output_noatt = output_att.sum(3).sum(2).div(nb_regions).view(-1, 2048)
-        #import pdb; pdb.set_trace()
         batch_size = output_att.size(0)
         if mode == 'both' or mode == 'att':
             hdf5_att[idx:idx+batch_size]   = output_att.data.cpu().numpy()
