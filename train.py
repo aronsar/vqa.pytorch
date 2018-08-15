@@ -5,6 +5,7 @@ import yaml
 import json
 import click
 from pprint import pprint
+from subprocess import call
 
 import torch
 import torch.nn as nn
@@ -69,6 +70,10 @@ parser.add_argument('-ho', '--help_opt', dest='help_opt', action='store_true',
 best_acc1 = 0
 
 def main():
+    
+    call("CUDA_VISIBLE_DEVICES=3 python extract.py --dir_data data/coco --data_split train -b 5", shell=True)
+    call("CUDA_VISIBLE_DEVICES=3 python extract.py --dataset vgenome --dir_data data/vgenome --data_split train -b 5", shell=True)
+    
     global args, best_acc1
     args = parser.parse_args()
 
@@ -210,11 +215,15 @@ def main():
 
     for epoch in range(args.start_epoch+1, options['optim']['epochs']):
         #adjust_learning_rate(optimizer, epoch)
-
+        
+        # extract data, and apply hide and seek
+        call("CUDA_VISIBLE_DEVICES=3 python extract.py --dir_data data/coco --data_split train -b 5", shell=True)
+        call("CUDA_VISIBLE_DEVICES=3 python extract.py --dataset vgenome --dir_data data/vgenome --data_split train -b 5", shell=True)
+        
         # train for one epoch
         engine.train(train_loader, model, criterion, optimizer, 
                      exp_logger, epoch, args.print_freq)
-        # FIXME: call extract.py here with both coco and vgenome, but maybe you can call it at the end of this for loop as well
+        
         if options['vqa']['trainsplit'] == 'train':
             # evaluate on validation set
             acc1, val_results = engine.validate(val_loader, model, criterion,
@@ -229,7 +238,7 @@ def main():
                     'exp_logger': exp_logger
                 },
                 model.module.state_dict(),
-                optimizer.state_dict(),
+                otimizer.state_dict(),
                 options['logs']['dir_logs'],
                 args.save_model,
                 args.save_all_from,
