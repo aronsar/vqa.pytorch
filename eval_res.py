@@ -31,7 +31,7 @@ if __name__=="__main__":
     fileTypes = ['results', 'accuracy', 'evalQA', 'evalQuesType', 'evalAnsType'] 
     
     [resFile, accuracyFile, evalQAFile, evalQuesTypeFile, evalAnsTypeFile] = \
-        ['%s/%s_%s_%s_%s_%s.json' % (args.dir_epoch, taskType, dataType,
+        ['%s%s/%s_%s_%s_%s_%s.json' % ('vqa_', args.dir_epoch, taskType, dataType,
             dataSubType, resultType, fileType) for fileType in fileTypes] 
     vqaRes = vqa.loadRes(resFile, quesFile)
     vqaEval = VQAEval(vqa, vqaRes, n=2)
